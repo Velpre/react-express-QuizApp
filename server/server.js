@@ -9,10 +9,10 @@ dotenv.config();
 const app = express();
 
 app.use(bodyParser.json());
-app.use(cookieParser());
+app.use(cookieParser(process.env.COOKIE_SECRET));
 
 app.get("/api", (req, res) => {
-  if (req.cookies.score){
+  if (req.signedCookies.score){
     res.clearCookie("score");
   }
   res.sendStatus(200);
@@ -32,25 +32,25 @@ app.post("/api/answer", (req, res) => {
     return res.sendStatus(404);
   }
 
-  const score = req.cookies.score
-    ? JSON.parse(req.cookies.score)
+  const score = req.signedCookies.score
+    ? JSON.parse(req.signedCookies.score)
     : { answered: 0, correct: 0 };
   score.answered += 1;
 
   if (result) {
     score.correct += 1;
-    res.cookie("score", JSON.stringify(score));
+    res.cookie("score", JSON.stringify(score), {signed:true});
     res.send("correct");
   } else {
-    res.cookie("score", JSON.stringify(score));
+    res.cookie("score", JSON.stringify(score), {signed:true});
     res.send("incorrect");
   }
 });
 
 app.get("/api/score", (req, res) => {
 
-      if(req.cookies.score){
-          const {correct, answered} = JSON.parse(req.cookies.score);
+      if(req.signedCookies.score){
+          const {correct, answered} = JSON.parse(req.signedCookies.score);
           res.json({correct, answered})
       }else{
         res.sendStatus(200);
